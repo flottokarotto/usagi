@@ -3,3 +3,5 @@ export { Octicon } from './octicon'
 export { iconForRepository } from './repository'
 export { iconForStatus } from './status'
 export { syncClockwise } from './sync-clockwise'
+export { usagiLogo } from './usagi-logo'
+
