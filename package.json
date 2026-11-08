@@ -1,11 +1,11 @@
 {
-  "name": "usagi-desktop-build",
+  "name": "usagi-build",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/flottokarotto/desktop.git"
+    "url": "https://github.com/flottokarotto/usagi.git"
   },
-  "description": "Usagi Desktop build dependencies",
+  "description": "Usagi build dependencies",
   "scripts": {
     "cli": "ts-node app/src/cli/main.ts",
     "check:eslint": "tsc -P eslint-rules/",

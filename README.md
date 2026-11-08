@@ -42,8 +42,8 @@ Forked from GitHub Desktop, Usagi Desktop extends the familiar desktop workflow 
 
 ```bash
 # Clone the repository
-git clone https://github.com/flottokarotto/desktop.git usagi-desktop
-cd usagi-desktop
+git clone https://github.com/flottokarotto/usagi.git usagi
+cd usagi
 
 # Install dependencies (compiles native modules)
 npm install

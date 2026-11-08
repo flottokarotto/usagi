@@ -1,19 +1,18 @@
 {
-  "name": "usagi-desktop",
-  "productName": "Usagi Desktop",
-  "bundleID": "io.usagi.desktop",
-  "companyName": "Usagi Desktop Contributors",
+  "name": "usagi",
+  "productName": "Usagi",
+  "bundleID": "io.usagi.app",
+  "companyName": "Usagi Contributors",
   "version": "3.6.11-beta1",
   "main": "./main.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/flottokarotto/desktop.git"
+    "url": "https://github.com/flottokarotto/usagi.git"
   },
   "description": "Simple Git and GitLab collaboration from your desktop",
   "author": {
-    "name": "GitHub, Inc.",
-    "email": "opensource+desktop@github.com",
-    "url": "https://desktop.github.com/"
+    "name": "Usagi Contributors",
+    "url": "https://github.com/flottokarotto/usagi"
   },
   "license": "MIT",
   "allowScripts": {
