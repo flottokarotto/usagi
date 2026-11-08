@@ -222,6 +222,10 @@ export class PullRequestList extends React.Component<
     const { onCheckoutInNewWorktree } = this.props
     const pullRequest = item.pullRequest
 
+    const isGitLab =
+      pullRequest.base.gitHubRepository.endpoint.includes('gitlab') ||
+      pullRequest.base.gitHubRepository.htmlURL?.includes('gitlab') === true
+
     const items = generatePullRequestContextMenuItems({
       onViewPullRequestOnGitHub: () => {
         this.props.dispatcher.showPullRequestByPR(pullRequest)
@@ -230,6 +234,7 @@ export class PullRequestList extends React.Component<
         onCheckoutInNewWorktree !== undefined
           ? () => onCheckoutInNewWorktree(pullRequest)
           : undefined,
+      isGitLab,
     })
 
     showContextualMenu(items)

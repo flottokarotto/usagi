@@ -208,6 +208,18 @@ export class BranchesContainer extends React.Component<
       return null
     }
 
+    const isGitLab =
+      this.props.repository.gitHubRepository.endpoint.includes('gitlab') ||
+      this.props.repository.gitHubRepository.htmlURL?.includes('gitlab') === true
+
+    const prTabTitle = isGitLab
+      ? __DARWIN__
+        ? 'Merge Requests'
+        : 'Merge requests'
+      : __DARWIN__
+      ? 'Pull Requests'
+      : 'Pull requests'
+
     return (
       <TabBar
         onTabClicked={this.onTabClicked}
@@ -216,7 +228,7 @@ export class BranchesContainer extends React.Component<
       >
         <span id="branches-tab">Branches</span>
         <span id="pull-requests-tab" className="pull-request-tab">
-          {__DARWIN__ ? 'Pull Requests' : 'Pull requests'}
+          {prTabTitle}
           {this.renderOpenPullRequestsBubble()}
         </span>
       </TabBar>

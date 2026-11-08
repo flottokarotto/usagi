@@ -7,8 +7,9 @@ import {
   getPullRequestKey,
 } from '../databases/pull-request-database'
 import { GitHubRepository } from '../../models/github-repository'
-import { Account } from '../../models/account'
+import { Account, isGitLabAccount } from '../../models/account'
 import { API, IAPIPullRequest, MaxResultsError } from '../api'
+import { GitLabAPI } from '../gitlab-api'
 import { fatalError } from '../fatal-error'
 import { RepositoriesStore } from './repositories-store'
 import { PullRequest, PullRequestRef } from '../../models/pull-request'
@@ -82,6 +83,10 @@ export class PullRequestStore {
     repo: GitHubRepository,
     account: Account
   ) {
+    if (isGitLabAccount(account)) {
+      return this.fetchAndStoreGitLabMergeRequests(repo, account)
+    }
+
     const api = API.fromAccount(account)
     const lastUpdatedAt = await this.db.getLastUpdated(repo)
 
@@ -100,6 +105,47 @@ export class PullRequestStore {
     } else {
       return this.fetchAndStoreUpdatedPullRequests(api, repo, lastUpdatedAt)
     }
+  }
+
+  private async fetchAndStoreGitLabMergeRequests(
+    repository: GitHubRepository,
+    account: Account
+  ) {
+    const api = new GitLabAPI(account.endpoint, account.token)
+    const { name, owner } = getNameWithOwner(repository)
+    const projectPath = `${owner}/${name}`
+    const mergeRequests = await api.getMergeRequests(projectPath, 'opened')
+
+    const prsToUpsert: IPullRequest[] = mergeRequests.map(mr => ({
+      number: mr.iid,
+      title: mr.title,
+      body: mr.description || '',
+      createdAt: mr.created_at,
+      updatedAt: mr.updated_at,
+      head: {
+        repoId: repository.dbID,
+        ref: mr.source_branch,
+        sha: '',
+      },
+      base: {
+        repoId: repository.dbID,
+        ref: mr.target_branch,
+        sha: '',
+      },
+      author: mr.author.username,
+      draft: mr.draft || mr.work_in_progress || false,
+    }))
+
+    await this.db.deleteAllPullRequestsInRepository(repository)
+    if (prsToUpsert.length > 0) {
+      await this.db.transaction('rw', this.db.pullRequests, async () => {
+        await this.db.putPullRequests(prsToUpsert)
+      })
+    }
+
+    const pullRequests = await this.getAll(repository)
+    this.emitPullRequestsChanged(repository, pullRequests)
+    return true
   }
 
   private async fetchAndStoreOpenPullRequests(

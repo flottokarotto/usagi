@@ -177,6 +177,11 @@ import {
   deleteToken,
   IAPICreatePushProtectionBypassResponse,
 } from '../api'
+import {
+  getGitLabCreateMergeRequestURL,
+  getGitLabWebURLFromRemoteURL,
+  isGitLabRemoteURL,
+} from '../gitlab-api'
 import { shell } from '../app-shell'
 import {
   CompareAction,
@@ -10217,7 +10222,17 @@ export class AppStore extends TypedBaseStore<IAppState> {
     baseBranch?: Branch
   ): Promise<void> {
     const gitHubRepository = repository.gitHubRepository
+
+    let gitLabRemoteUrl: string | null = null
     if (!gitHubRepository) {
+      const remotes = await getRemotes(repository)
+      const primaryRemote = remotes.find(r => r.name === 'origin') ?? remotes[0]
+      if (primaryRemote && isGitLabRemoteURL(primaryRemote.url)) {
+        gitLabRemoteUrl = primaryRemote.url
+      }
+    }
+
+    if (!gitHubRepository && !gitLabRemoteUrl) {
       return
     }
 
@@ -10245,11 +10260,23 @@ export class AppStore extends TypedBaseStore<IAppState> {
         unPushedCommits: aheadBehind.ahead,
       })
     } else {
-      await this._openCreatePullRequestInBrowser(
-        repository,
-        compareBranch,
-        baseBranch
-      )
+      if (gitLabRemoteUrl) {
+        const webUrl = getGitLabWebURLFromRemoteURL(gitLabRemoteUrl)
+        if (webUrl) {
+          const mrUrl = getGitLabCreateMergeRequestURL(
+            webUrl,
+            compareBranch.upstreamWithoutRemote ?? compareBranch.nameWithoutRemote,
+            baseBranch?.nameWithoutRemote
+          )
+          await this._openInBrowser(mrUrl)
+        }
+      } else {
+        await this._openCreatePullRequestInBrowser(
+          repository,
+          compareBranch,
+          baseBranch
+        )
+      }
     }
   }
 
@@ -10276,7 +10303,9 @@ export class AppStore extends TypedBaseStore<IAppState> {
       return
     }
 
-    const showPrUrl = `${baseRepoUrl}/pull/${pr.pullRequestNumber}`
+    const showPrUrl = baseRepoUrl.includes('gitlab')
+      ? `${baseRepoUrl}/-/merge_requests/${pr.pullRequestNumber}`
+      : `${baseRepoUrl}/pull/${pr.pullRequestNumber}`
 
     await this._openInBrowser(showPrUrl)
   }

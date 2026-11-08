@@ -85,6 +85,53 @@ export function isGitLabEndpoint(endpoint: string): boolean {
   }
 }
 
+export function isGitLabRemoteURL(remoteUrl: string): boolean {
+  return (
+    remoteUrl.includes('gitlab.com') ||
+    remoteUrl.toLowerCase().includes('gitlab')
+  )
+}
+
+/**
+ * Convert a git remote URL (SSH or HTTPS) for a GitLab repository into
+ * its browser web URL.
+ * e.g. git@gitlab.com:group/subgroup/project.git -> https://gitlab.com/group/subgroup/project
+ * e.g. https://gitlab.example.com/group/project.git -> https://gitlab.example.com/group/project
+ */
+export function getGitLabWebURLFromRemoteURL(remoteUrl: string): string | null {
+  const trimmed = remoteUrl.trim().replace(/\.git\/?$/, '')
+
+  const sshMatch = /^git@([^:]+):(.+)$/.exec(trimmed)
+  if (sshMatch) {
+    const host = sshMatch[1]
+    const path = sshMatch[2]
+    return `https://${host}/${path}`
+  }
+
+  try {
+    const url = new URL(trimmed)
+    return `${url.origin}${url.pathname}`
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Generate the web URL to open the GitLab page for creating a new Merge Request.
+ */
+export function getGitLabCreateMergeRequestURL(
+  webUrl: string,
+  sourceBranch: string,
+  targetBranch?: string
+): string {
+  const base = webUrl.replace(/\/+$/, '')
+  let url = `${base}/-/merge_requests/new?merge_request%5Bsource_branch%5D=${encodeURIComponent(sourceBranch)}`
+  if (targetBranch) {
+    url += `&merge_request%5Btarget_branch%5D=${encodeURIComponent(targetBranch)}`
+  }
+  return url
+}
+
 export class GitLabAPI {
   private readonly endpoint: string
   private readonly token: string
