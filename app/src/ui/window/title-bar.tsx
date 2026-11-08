@@ -4,7 +4,6 @@ import { WindowState } from '../../lib/window-state'
 import { WindowControls } from './window-controls'
 import { Octicon } from '../octicons/octicon'
 import { usagiLogo } from '../octicons'
-import * as octicons from '../octicons/octicons.generated'
 import { isMacOSBigSurOrLater, isMacOSTahoeOrLater } from '../../lib/get-os'
 import {
   getAppleActionOnDoubleClick,

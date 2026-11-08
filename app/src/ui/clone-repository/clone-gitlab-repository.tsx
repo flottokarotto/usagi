@@ -46,7 +46,7 @@ function gitLabProjectToAPIRepository(
       login: ownerLogin,
       avatar_url: '',
       type: 'User',
-      endpoint,
+      html_url: project.web_url,
     },
     private: project.visibility === 'private',
     fork: project.forked_from_project !== undefined,

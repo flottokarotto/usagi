@@ -20,7 +20,7 @@ interface IAccountsProps {
 
   readonly onDotComSignIn: () => void
   readonly onEnterpriseSignIn: () => void
-  readonly onGitLabSignIn: () => void
+  readonly onGitLabSignIn?: () => void
   readonly onLogout: (account: Account) => void
 }
 
@@ -149,7 +149,7 @@ export class Accounts extends React.Component<IAccountsProps, {}> {
   }
 
   private onGitLabSignIn = () => {
-    this.props.onGitLabSignIn()
+    this.props.onGitLabSignIn?.()
   }
 
   private renderSignIn(type: SignInType) {
