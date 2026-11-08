@@ -10227,7 +10227,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
     if (!gitHubRepository) {
       const remotes = await getRemotes(repository)
       const primaryRemote = remotes.find(r => r.name === 'origin') ?? remotes[0]
-      if (primaryRemote && isGitLabRemoteURL(primaryRemote.url)) {
+      if (primaryRemote && isGitLabRemoteURL(primaryRemote.url, this.accounts)) {
         gitLabRemoteUrl = primaryRemote.url
       }
     }

@@ -1,9 +1,10 @@
 import * as URL from 'url'
 import * as Path from 'path'
 
-import { Account, isSameAccount } from '../models/account'
+import { Account, isSameAccount, isGitLabAccount } from '../models/account'
 import { IRemote } from '../models/remote'
 import { API, getAPIEndpoint, getHTMLURL, IAPIFullRepository } from './api'
+import { GitLabAPI } from './gitlab-api'
 import {
   IGitRemoteURL,
   parseRemote,
@@ -63,6 +64,46 @@ async function probeRemoteRepositoryAccount(
   if (match === null) {
     return null
   }
+
+  if (isGitLabAccount(account)) {
+    try {
+      const gitlabApi = new GitLabAPI(account.endpoint, account.token)
+      const project = await gitlabApi.getProject(`${match.owner}/${match.name}`)
+      if (project === null) {
+        return null
+      }
+
+      const apiRepository: IAPIFullRepository = {
+        clone_url: project.http_url_to_repo,
+        ssh_url: project.ssh_url_to_repo,
+        html_url: project.web_url,
+        name: project.name,
+        owner: {
+          id: project.id,
+          login: match.owner,
+          avatar_url: '',
+          type: 'User',
+          html_url: project.web_url,
+        },
+        private: project.visibility === 'private',
+        fork: project.forked_from_project !== undefined,
+        default_branch: project.default_branch || 'main',
+        pushed_at: '',
+        has_issues: true,
+        archived: project.archived,
+        parent: undefined,
+        permissions: {
+          pull: true,
+          push: true,
+          admin: false,
+        },
+      }
+      return { ...match, apiRepository }
+    } catch {
+      return null
+    }
+  }
+
   const api = API.fromAccount(account)
   // The API doesn't know about wikis, so check access to the wiki's
   // repository instead. The wiki gets no API metadata of its own.

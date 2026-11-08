@@ -2365,6 +2365,12 @@ export function getHTMLURL(endpoint: string): string {
   if (endpoint === getDotComAPIEndpoint() && !envEndpoint) {
     return 'https://github.com'
   } else {
+    if (endpoint.includes('/api/v4')) {
+      const url = new URL.URL(endpoint)
+      url.pathname = url.pathname.replace(/\/api\/v4\/?$/, '')
+      return url.toString().replace(/\/+$/, '')
+    }
+
     if (isGHE(endpoint)) {
       const url = new URL.URL(endpoint)
 

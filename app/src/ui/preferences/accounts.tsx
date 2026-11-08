@@ -130,7 +130,10 @@ export class Accounts extends React.Component<IAccountsProps, {}> {
           <Avatar accounts={this.props.accounts} user={avatarUser} />
           <div className="user-info">
             <div className="name">{account.name}</div>
-            <div className="login">@{account.login}</div>
+            <div className="login">
+              @{account.login}
+              {type !== SignInType.DotCom && ` • ${account.friendlyEndpoint}`}
+            </div>
           </div>
         </div>
         <Button onClick={this.logout(account)} className={className}>

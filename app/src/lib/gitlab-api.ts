@@ -1,3 +1,7 @@
+import { Account, isGitLabAccount } from '../models/account'
+import { parseRemote } from './remote-parsing'
+import { getHTMLURL } from './api'
+
 export const DefaultGitLabEndpoint = 'https://gitlab.com/api/v4'
 export const DefaultGitLabHTMLURL = 'https://gitlab.com'
 
@@ -85,11 +89,37 @@ export function isGitLabEndpoint(endpoint: string): boolean {
   }
 }
 
-export function isGitLabRemoteURL(remoteUrl: string): boolean {
-  return (
+export function isGitLabRemoteURL(
+  remoteUrl: string,
+  accounts?: ReadonlyArray<Account>
+): boolean {
+  if (
     remoteUrl.includes('gitlab.com') ||
     remoteUrl.toLowerCase().includes('gitlab')
-  )
+  ) {
+    return true
+  }
+
+  if (accounts) {
+    const parsed = parseRemote(remoteUrl)
+    if (parsed) {
+      return accounts.some(a => {
+        if (!isGitLabAccount(a)) {
+          return false
+        }
+        try {
+          return (
+            new URL(getHTMLURL(a.endpoint)).hostname.toLowerCase() ===
+            parsed.hostname.toLowerCase()
+          )
+        } catch {
+          return false
+        }
+      })
+    }
+  }
+
+  return false
 }
 
 /**
@@ -97,20 +127,33 @@ export function isGitLabRemoteURL(remoteUrl: string): boolean {
  * its browser web URL.
  * e.g. git@gitlab.com:group/subgroup/project.git -> https://gitlab.com/group/subgroup/project
  * e.g. https://gitlab.example.com/group/project.git -> https://gitlab.example.com/group/project
+ * e.g. ssh://git@gitlab.example.com:2222/group/project.git -> https://gitlab.example.com/group/project
  */
 export function getGitLabWebURLFromRemoteURL(remoteUrl: string): string | null {
   const trimmed = remoteUrl.trim().replace(/\.git\/?$/, '')
 
-  const sshMatch = /^git@([^:]+):(.+)$/.exec(trimmed)
-  if (sshMatch) {
-    const host = sshMatch[1]
-    const path = sshMatch[2]
-    return `https://${host}/${path}`
+  const standardSshMatch = /^git@([^:]+):(.+)$/.exec(trimmed)
+  if (standardSshMatch) {
+    const host = standardSshMatch[1]
+    const path = standardSshMatch[2]
+    return `https://${host}/${path.replace(/^\/+/, '')}`
+  }
+
+  const customSshMatch = /^ssh:\/\/(?:.+@)?([^/:]+)(?::\d+)?\/(.+)$/.exec(
+    trimmed
+  )
+  if (customSshMatch) {
+    const host = customSshMatch[1]
+    const path = customSshMatch[2]
+    return `https://${host}/${path.replace(/^\/+/, '')}`
   }
 
   try {
     const url = new URL(trimmed)
-    return `${url.origin}${url.pathname}`
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return `${url.origin}${url.pathname}`
+    }
+    return `https://${url.hostname}${url.pathname}`
   } catch {
     return null
   }

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Account, isGitLabAccount } from '../../models/account'
 import { DialogContent } from '../dialog'
 import { TextBox } from '../lib/text-box'
+import { Select } from '../lib/select'
 import { Row } from '../lib/row'
 import { Button } from '../lib/button'
 import { CallToAction } from '../lib/call-to-action'
@@ -138,6 +139,17 @@ export class CloneGitLabRepository extends React.Component<
     this.props.onSelectionChanged(repository)
   }
 
+  private onAccountChanged = (event: React.FormEvent<HTMLSelectElement>) => {
+    const key = event.currentTarget.value
+    const gitLabAccounts = this.props.accounts.filter(isGitLabAccount)
+    const nextAccount =
+      gitLabAccounts.find(a => `${a.endpoint}:${a.login}` === key) ?? null
+    this.setState({ selectedAccount: nextAccount })
+    if (nextAccount) {
+      this.loadRepositories(nextAccount)
+    }
+  }
+
   public render() {
     const gitLabAccounts = this.props.accounts.filter(isGitLabAccount)
 
@@ -158,6 +170,24 @@ export class CloneGitLabRepository extends React.Component<
 
     return (
       <DialogContent className="clone-github-repo-content">
+        {gitLabAccounts.length > 1 && (
+          <Row>
+            <Select
+              label="GitLab account"
+              value={`${this.state.selectedAccount?.endpoint}:${this.state.selectedAccount?.login}`}
+              onChange={this.onAccountChanged}
+            >
+              {gitLabAccounts.map(account => (
+                <option
+                  key={`${account.endpoint}:${account.login}`}
+                  value={`${account.endpoint}:${account.login}`}
+                >
+                  {account.friendlyEndpoint} — @{account.login} ({account.friendlyName})
+                </option>
+              ))}
+            </Select>
+          </Row>
+        )}
         <Row>
           <CloneableRepositoryFilterList
             account={this.state.selectedAccount!}
