@@ -69,6 +69,13 @@ export class Welcome extends React.Component<IWelcomeProps, IWelcomeState> {
 
   public componentWillReceiveProps(nextProps: IWelcomeProps) {
     this.advanceOnSuccessfulSignIn(nextProps)
+
+    if (
+      this.state.currentStep === WelcomeStep.Start &&
+      nextProps.accounts.length > this.props.accounts.length
+    ) {
+      this.advanceToStep(WelcomeStep.ConfigureGit)
+    }
   }
 
   public componentDidMount() {

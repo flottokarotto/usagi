@@ -72,7 +72,10 @@ export interface IGitLabCommitStatus {
 }
 
 export function getGitLabAPIEndpoint(baseURL = DefaultGitLabHTMLURL): string {
-  const trimmed = baseURL.trim().replace(/\/+$/, '')
+  let trimmed = baseURL.trim().replace(/\/+$/, '')
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = `https://${trimmed}`
+  }
   return trimmed.endsWith('/api/v4') ? trimmed : `${trimmed}/api/v4`
 }
 
@@ -211,9 +214,18 @@ export class GitLabAPI {
     })
 
     if (!response.ok) {
-      throw new Error(
-        `GitLab API request failed (${response.status} ${response.statusText}): ${url.toString()}`
-      )
+      let detail = ''
+      try {
+        const errJson: any = await response.json()
+        detail =
+          errJson.message ||
+          errJson.error_description ||
+          errJson.error ||
+          JSON.stringify(errJson)
+      } catch {
+        detail = response.statusText
+      }
+      throw new Error(`GitLab API error (${response.status}): ${detail}`)
     }
 
     return (await response.json()) as T

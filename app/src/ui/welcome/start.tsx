@@ -52,7 +52,7 @@ export class Start extends React.Component<IStartProps, {}> {
               className="button-with-icon"
               onClick={this.signInToGitLab}
             >
-              Sign in to GitLab
+              Sign in to GitLab (GitLab.com & Self-Hosted)
             </Button>
             <Button
               type="submit"
@@ -70,7 +70,7 @@ export class Start extends React.Component<IStartProps, {}> {
               <Button onClick={this.cancelBrowserAuth}>Cancel</Button>
             ) : (
               <Button onClick={this.signInToEnterprise}>
-                Sign in to GitHub Enterprise
+                Sign in to GitHub Enterprise Server
               </Button>
             )}
           </div>

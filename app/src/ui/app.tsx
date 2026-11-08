@@ -3427,7 +3427,6 @@ export class App extends React.Component<IAppProps, IAppState> {
         {this.renderToolbar()}
         {this.renderBanner()}
         {this.renderRepository()}
-        {this.renderPopups()}
         {this.renderDragElement()}
       </div>
     )
@@ -4191,6 +4190,7 @@ export class App extends React.Component<IAppProps, IAppState> {
         {this.state.showWelcomeFlow
           ? this.renderWelcomeFlow()
           : this.renderApp()}
+        {this.renderPopups()}
         {this.renderZoomInfo()}
         {this.renderFullScreenInfo()}
       </div>

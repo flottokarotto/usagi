@@ -46,8 +46,11 @@ export class GitLabSignIn extends React.Component<
 
   private onOpenTokenPage = () => {
     const rawEndpoint = this.state.endpoint.trim().replace(/\/+$/, '')
-    const base = rawEndpoint.length > 0 ? rawEndpoint : DefaultGitLabHTMLURL
-    const tokenUrl = `${base}/-/user_settings/personal_access_tokens?name=Usagi+Desktop&scopes=read_api,read_user,read_repository,write_repository`
+    let base = rawEndpoint.length > 0 ? rawEndpoint : DefaultGitLabHTMLURL
+    if (!base.startsWith('http://') && !base.startsWith('https://')) {
+      base = `https://${base}`
+    }
+    const tokenUrl = `${base}/-/profile/personal_access_tokens?name=Usagi&scopes=api,read_api,read_user,read_repository,write_repository`
     this.props.dispatcher.openInBrowser(tokenUrl)
   }
 
