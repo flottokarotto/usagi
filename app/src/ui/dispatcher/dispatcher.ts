@@ -1949,6 +1949,21 @@ export class Dispatcher {
   }
 
   /**
+   * Launch a sign in dialog for authenticating a user with
+   * GitLab (GitLab.com or Self-Hosted GitLab instance).
+   */
+  public async showGitLabSignInDialog(endpoint?: string): Promise<void> {
+    this.appStore._showPopup({ type: PopupType.GitLabSignIn, endpoint })
+  }
+
+  /**
+   * Save an authenticated account directly into the accounts store.
+   */
+  public async addAccount(account: Account): Promise<Account | null> {
+    return this.appStore._addAccount(account)
+  }
+
+  /**
    * Show a dialog that helps the user create a fork of
    * their local repo.
    */

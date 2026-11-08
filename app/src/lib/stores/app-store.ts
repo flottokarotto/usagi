@@ -9454,6 +9454,11 @@ export class AppStore extends TypedBaseStore<IAppState> {
     return result
   }
 
+  public async _addAccount(account: Account): Promise<Account | null> {
+    log.info(`[AppStore] adding account ${account.login} (${account.name}) to store`)
+    return this.accountsStore.addAccount(account)
+  }
+
   public async _removeAccount(account: Account) {
     log.info(
       `[AppStore] removing account ${account.login} (${account.name}) from store`

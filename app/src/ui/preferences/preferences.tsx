@@ -491,6 +491,11 @@ export class Preferences extends React.Component<
     this.props.dispatcher.showEnterpriseSignInDialog()
   }
 
+  private onGitLabSignIn = () => {
+    this.props.onDismissed()
+    this.props.dispatcher.showGitLabSignInDialog()
+  }
+
   private onCopilotSignIn = () => {
     this.setState({ selectedIndex: PreferencesTab.Accounts })
   }
@@ -549,6 +554,7 @@ export class Preferences extends React.Component<
             accounts={this.props.accounts}
             onDotComSignIn={this.onDotComSignIn}
             onEnterpriseSignIn={this.onEnterpriseSignIn}
+            onGitLabSignIn={this.onGitLabSignIn}
             onLogout={this.onLogout}
           />
         )
