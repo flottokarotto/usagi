@@ -134,8 +134,8 @@ export class CrashApp extends React.Component<CrashAppProps, ICrashAppState> {
   private renderTitle() {
     const message =
       this.state.type === 'launch'
-        ? 'GitHub Desktop failed to launch'
-        : 'GitHub Desktop encountered an error'
+        ? 'Usagi failed to launch'
+        : 'Usagi encountered an error'
 
     return (
       <header>
@@ -149,18 +149,16 @@ export class CrashApp extends React.Component<CrashAppProps, ICrashAppState> {
     if (this.state.type === 'launch') {
       return (
         <p>
-          GitHub Desktop encountered a catastrophic error that prevents it from
-          launching. This has been reported to the team, but if you encounter
-          this repeatedly please report this issue to the GitHub Desktop{' '}
+          Usagi encountered a catastrophic error that prevents it from
+          launching. If you encounter this repeatedly please report this issue to the Usagi{' '}
           <LinkButton uri={issuesUri}>issue tracker</LinkButton>.
         </p>
       )
     } else {
       return (
         <p>
-          GitHub Desktop has encountered an unrecoverable error and will need to
-          restart. This has been reported to the team, but if you encounter this
-          repeatedly please report this issue to the GitHub Desktop{' '}
+          Usagi has encountered an unrecoverable error and will need to
+          restart. If you encounter this repeatedly please report this issue to the Usagi{' '}
           <LinkButton uri={issuesUri}>issue tracker</LinkButton>.
         </p>
       )
