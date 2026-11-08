@@ -11,6 +11,8 @@ jobs:
   build-windows:
     name: Build Windows x64 Testversion
     runs-on: windows-2022
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
