@@ -10,8 +10,13 @@
 // See https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme
 // https://www.electronjs.org/docs/api/native-theme#nativethemethemesource
 
-// This blue passes WCAG 2 guidelines with $gray-100 fg and $gray-900 bg.
-$link-color: #2e8fff;
+// Usagi Dark Theme Palette
+$usagi-dark-primary: #fc6d26;
+$usagi-dark-primary-hover: #ff7838;
+$usagi-dark-link: #c4b5fd;
+$usagi-dark-bg: #181825;
+$usagi-dark-surface: #1e1e2e;
+$usagi-dark-surface-elevated: #28283d;
 
 body.theme-dark {
   --color-new: #{$green};
@@ -23,18 +28,18 @@ body.theme-dark {
   --text-color: #{$gray-100};
   --text-secondary-color: #{$gray-400};
   --text-secondary-color-muted: #{darken($gray-500, 10%)};
-  --background-color: #{$gray-900};
+  --background-color: #{$usagi-dark-bg};
 
-  --button-background: #{$blue};
-  --button-hover-background: #{lighten($blue, 5%)};
+  --button-background: #{$usagi-dark-primary};
+  --button-hover-background: #{$usagi-dark-primary-hover};
   --button-text-color: #{$white};
-  --button-focus-border-color: #{$blue-600};
+  --button-focus-border-color: #{rgba($usagi-dark-primary, 0.4)};
 
-  --link-button-color: #{$link-color};
-  --link-button-hover-color: #{lighten($link-color, 3%)};
-  --link-button-selected-hover-color: #{$link-color};
+  --link-button-color: #{$usagi-dark-link};
+  --link-button-hover-color: #{lighten($usagi-dark-link, 5%)};
+  --link-button-selected-hover-color: #{$usagi-dark-link};
 
-  --secondary-button-background: #{$gray-800};
+  --secondary-button-background: #{$usagi-dark-surface-elevated};
   --secondary-button-border-color: var(--box-border-contrast-color);
   --secondary-button-hover-border-color: #{$gray-300};
   --secondary-button-hover-background: var(--secondary-button-background);
@@ -194,8 +199,8 @@ body.theme-dark {
   --shadow-color: #{rgba(black, 0.5)};
   --base-box-shadow: 0 2px 7px var(--shadow-color);
 
-  --toolbar-background-color: #{darken($gray-900, 3%)};
-  --toolbar-border-color: var(--box-border-color);
+  --toolbar-background-color: #{$usagi-dark-surface};
+  --toolbar-border-color: #{lighten($usagi-dark-surface, 6%)};
   --toolbar-text-color: var(--text-color);
   --toolbar-text-secondary-color: var(--text-secondary-color);
 

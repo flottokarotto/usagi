@@ -43,6 +43,7 @@ export enum PopupType {
   CloneRepository = 'CloneRepository',
   CreateBranch = 'CreateBranch',
   SignIn = 'SignIn',
+  GitLabSignIn = 'GitLabSignIn',
   About = 'About',
   InstallGit = 'InstallGit',
   PublishRepository = 'PublishRepository',
@@ -213,6 +214,7 @@ export type PopupDetail =
       targetCommit?: CommitOneLine
     }
   | { type: PopupType.SignIn }
+  | { type: PopupType.GitLabSignIn; endpoint?: string }
   | { type: PopupType.About }
   | { type: PopupType.InstallGit; path: string }
   | { type: PopupType.PublishRepository; repository: Repository }

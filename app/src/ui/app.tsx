@@ -88,7 +88,7 @@ import { MissingRepository } from './missing-repository'
 import { AddExistingRepository, CreateRepository } from './add-repository'
 import { CloneRepository } from './clone-repository'
 import { CreateBranch } from './create-branch'
-import { SignIn } from './sign-in'
+import { SignIn, GitLabSignIn } from './sign-in'
 import { InstallGit } from './install-git'
 import { EditorError } from './editor'
 import { CopilotAppNotFoundDialog } from './copilot-app/copilot-app-not-found-dialog'
@@ -1887,6 +1887,15 @@ export class App extends React.Component<IAppProps, IAppState> {
             signInState={this.state.signInState}
             dispatcher={this.props.dispatcher}
             onDismissed={onPopupDismissedFn}
+          />
+        )
+      case PopupType.GitLabSignIn:
+        return (
+          <GitLabSignIn
+            key="gitlab-sign-in"
+            dispatcher={this.props.dispatcher}
+            onDismissed={onPopupDismissedFn}
+            initialEndpoint={popup.endpoint}
           />
         )
       case PopupType.AddRepository:

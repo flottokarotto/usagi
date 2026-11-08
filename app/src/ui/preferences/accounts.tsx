@@ -3,6 +3,7 @@ import {
   Account,
   isDotComAccount,
   isEnterpriseAccount,
+  isGitLabAccount,
 } from '../../models/account'
 import { IAvatarUser } from '../../models/avatar'
 import { lookupPreferredEmail } from '../../lib/email'
@@ -19,21 +20,38 @@ interface IAccountsProps {
 
   readonly onDotComSignIn: () => void
   readonly onEnterpriseSignIn: () => void
+  readonly onGitLabSignIn: () => void
   readonly onLogout: (account: Account) => void
 }
 
 enum SignInType {
   DotCom,
   Enterprise,
+  GitLab,
 }
 
 export class Accounts extends React.Component<IAccountsProps, {}> {
   public render() {
     const { accounts } = this.props
     const dotComAccounts = accounts.filter(isDotComAccount)
+    const gitLabAccounts = accounts.filter(isGitLabAccount)
 
     return (
       <DialogContent className="accounts-tab">
+        <div className="accounts-section">
+          <h2>GitLab</h2>
+          {gitLabAccounts.map(account =>
+            this.renderAccount(account, SignInType.GitLab)
+          )}
+          {gitLabAccounts.length === 0 ? (
+            this.renderSignIn(SignInType.GitLab)
+          ) : (
+            <Button onClick={this.props.onGitLabSignIn}>
+              Add GitLab account
+            </Button>
+          )}
+        </div>
+
         <div className="accounts-section">
           <h2>GitHub.com</h2>
           {dotComAccounts.map(account =>
@@ -130,9 +148,24 @@ export class Accounts extends React.Component<IAccountsProps, {}> {
     this.props.onEnterpriseSignIn()
   }
 
+  private onGitLabSignIn = () => {
+    this.props.onGitLabSignIn()
+  }
+
   private renderSignIn(type: SignInType) {
     const signInTitle = __DARWIN__ ? 'Sign Into' : 'Sign into'
     switch (type) {
+      case SignInType.GitLab:
+        return (
+          <CallToAction
+            actionTitle={signInTitle + ' GitLab'}
+            onAction={this.onGitLabSignIn}
+          >
+            <div>
+              Sign in to GitLab.com or your self-hosted GitLab instance to access your projects.
+            </div>
+          </CallToAction>
+        )
       case SignInType.DotCom: {
         return (
           <CallToAction

@@ -185,6 +185,15 @@ async function getCredential(
       : getLeasedCredential(cred, store, token, account)
   }
 
+  // Check if we have a signed-in account for this host (e.g. GitLab or GitHub Enterprise)
+  const matchingHostAccount = (await store.getAll()).find(a =>
+    isSameOrigin(credentialUrl, a.endpoint)
+  )
+  if (matchingHostAccount !== undefined) {
+    info(`using signed-in account ${matchingHostAccount.login} for ${endpoint}`)
+    return getLeasedCredential(cred, store, token, matchingHostAccount)
+  }
+
   // Never lend a repository's credentials to a different GitHub endpoint
   // (for example a submodule hosted on another server).
   if ((await endpointKind()) !== 'generic') {

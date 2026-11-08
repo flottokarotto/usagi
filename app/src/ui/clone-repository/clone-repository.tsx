@@ -23,6 +23,7 @@ import { TabBar } from '../tab-bar'
 import { CloneRepositoryTab } from '../../models/clone-repository-tab'
 import { CloneGenericRepository } from './clone-generic-repository'
 import { CloneGithubRepository } from './clone-github-repository'
+import { CloneGitLabRepository } from './clone-gitlab-repository'
 import { assertNever } from '../../lib/fatal-error'
 import { CallToAction } from '../lib/call-to-action'
 import { IAccountRepositories } from '../../lib/stores/api-repositories-store'
@@ -107,6 +108,9 @@ interface ICloneRepositoryState {
   /** The persisted state of the CloneGitHubRepository component. */
   readonly gitHubTabState: IGitHubTabState
 
+  /** The persisted state of the CloneGitLabRepository component. */
+  readonly gitLabTabState: IGitLabTabState
+
   /**
    * The persisted state of the CloneGenericRepository component.
    */
@@ -142,6 +146,25 @@ interface IUrlTabState extends IBaseTabState {
  */
 interface IGitHubTabState extends IBaseTabState {
   readonly kind: 'gitHubTabState'
+
+  /**
+   * The contents of the filter text box used to filter the list of
+   * repositories.
+   */
+  readonly filterText: string
+
+  /**
+   * The currently selected repository, or null if no repository
+   * is selected.
+   */
+  readonly selectedItem: IAPIRepository | null
+}
+
+/**
+ * Persisted state for the CloneGitLabRepository component.
+ */
+interface IGitLabTabState extends IBaseTabState {
+  readonly kind: 'gitLabTabState'
 
   /**
    * The contents of the filter text box used to filter the list of
@@ -229,6 +252,12 @@ export class CloneRepository extends React.Component<
         selectedItem: null,
         ...initialBaseTabState,
       },
+      gitLabTabState: {
+        kind: 'gitLabTabState',
+        filterText: '',
+        selectedItem: null,
+        ...initialBaseTabState,
+      },
       urlTabState: {
         kind: 'urlTabState',
         ...initialBaseTabState,
@@ -283,8 +312,9 @@ export class CloneRepository extends React.Component<
   private initializePath = async () => {
     const initialPath = await getDefaultDir()
     const gitHubTabState = { ...this.state.gitHubTabState, path: initialPath }
+    const gitLabTabState = { ...this.state.gitLabTabState, path: initialPath }
     const urlTabState = { ...this.state.urlTabState, path: initialPath }
-    this.setState({ initialPath, gitHubTabState, urlTabState })
+    this.setState({ initialPath, gitHubTabState, gitLabTabState, urlTabState })
 
     // Update the local path based on the current url now that we have an
     // initial path
@@ -308,6 +338,7 @@ export class CloneRepository extends React.Component<
           selectedIndex={this.props.selectedTab}
         >
           <span id="github-tab">GitHub</span>
+          <span id="gitlab-tab">GitLab</span>
           <span id="url-tab">URL</span>
         </TabBar>
 
@@ -323,9 +354,14 @@ export class CloneRepository extends React.Component<
   }
 
   private getSelectedTabId = () => {
-    return this.props.selectedTab === CloneRepositoryTab.GitHub
-      ? 'github-tab'
-      : 'url-tab'
+    switch (this.props.selectedTab) {
+      case CloneRepositoryTab.GitHub:
+        return 'github-tab'
+      case CloneRepositoryTab.GitLab:
+        return 'gitlab-tab'
+      case CloneRepositoryTab.Generic:
+        return 'url-tab'
+    }
   }
 
   private checkIfCloningDisabled = () => {
@@ -382,6 +418,19 @@ export class CloneRepository extends React.Component<
     this.setSelectedTabState({ path }, this.validatePath)
   }
 
+  private onGitLabSelectionChanged = (selectedItem: IAPIRepository | null) => {
+    this.setState(prevState => ({
+      gitLabTabState: {
+        ...prevState.gitLabTabState,
+        selectedItem,
+        url: selectedItem ? selectedItem.clone_url : '',
+      },
+    }))
+    if (selectedItem) {
+      this.updateUrl(selectedItem.clone_url)
+    }
+  }
+
   private renderActiveTab() {
     const tab = this.props.selectedTab
 
@@ -397,6 +446,21 @@ export class CloneRepository extends React.Component<
             onChooseDirectory={this.onChooseDirectory}
           />
         )
+
+      case CloneRepositoryTab.GitLab: {
+        const tabState = this.state.gitLabTabState
+        return (
+          <CloneGitLabRepository
+            path={tabState.path ?? ''}
+            accounts={this.props.accounts}
+            selectedItem={tabState.selectedItem}
+            onSelectionChanged={this.onGitLabSelectionChanged}
+            onPathChanged={this.onPathChanged}
+            onChooseDirectory={this.onChooseDirectory}
+            dispatcher={this.props.dispatcher}
+          />
+        )
+      }
 
       case CloneRepositoryTab.GitHub: {
         const tabState = this.state.gitHubTabState
@@ -498,6 +562,8 @@ export class CloneRepository extends React.Component<
   private getTabState(tab: CloneRepositoryTab): IBaseTabState {
     if (tab === CloneRepositoryTab.GitHub) {
       return this.state.gitHubTabState
+    } else if (tab === CloneRepositoryTab.GitLab) {
+      return this.state.gitLabTabState
     } else if (tab === CloneRepositoryTab.Generic) {
       return this.state.urlTabState
     } else {
@@ -535,6 +601,13 @@ export class CloneRepository extends React.Component<
       this.setState(
         prevState => ({
           gitHubTabState: { ...prevState.gitHubTabState, ...state },
+        }),
+        callback
+      )
+    } else if (tab === CloneRepositoryTab.GitLab) {
+      this.setState(
+        prevState => ({
+          gitLabTabState: { ...prevState.gitLabTabState, ...state },
         }),
         callback
       )
