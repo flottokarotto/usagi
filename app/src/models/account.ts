@@ -122,11 +122,32 @@ export class Account {
    * hostname without the protocol and/or path.
    */
   public get friendlyEndpoint(): string {
-    return (this._friendlyEndpoint ??= isDotComAccount(this)
-      ? 'GitHub.com'
-      : new URL(getHTMLURL(this.endpoint)).hostname)
+    if (this._friendlyEndpoint !== undefined) {
+      return this._friendlyEndpoint
+    }
+
+    if (isDotComAccount(this)) {
+      return (this._friendlyEndpoint = 'GitHub.com')
+    }
+
+    if (isGitLabAccount(this)) {
+      try {
+        const hostname = new URL(this.endpoint).hostname
+        return (this._friendlyEndpoint = hostname === 'gitlab.com' ? 'GitLab.com' : hostname)
+      } catch {
+        return (this._friendlyEndpoint = 'GitLab')
+      }
+    }
+
+    return (this._friendlyEndpoint = new URL(getHTMLURL(this.endpoint)).hostname)
   }
 }
+
+/**
+ * Whether or not the given account is a GitLab account (GitLab.com or self-hosted GitLab)
+ */
+export const isGitLabAccount = (account: Account) =>
+  account.endpoint.includes('gitlab') || account.endpoint.includes('/api/v4')
 
 /**
  * Whether or not the given account is a GitHub.com account as opposed to
@@ -137,7 +158,7 @@ export const isDotComAccount = (account: Account) =>
 
 /**
  * Whether or not the given account is a GitHub Enterprise account (as opposed to
- * a GitHub.com account)
+ * a GitHub.com account or GitLab account)
  */
 export const isEnterpriseAccount = (account: Account) =>
-  !isDotComAccount(account)
+  !isDotComAccount(account) && !isGitLabAccount(account)
