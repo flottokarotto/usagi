@@ -53,9 +53,8 @@
     "validate-changelog": "ts-node -P script/tsconfig.json script/validate-changelog.ts"
   },
   "author": {
-    "name": "GitHub, Inc.",
-    "email": "opensource+desktop@github.com",
-    "url": "https://desktop.github.com/"
+    "name": "Usagi Contributors",
+    "url": "https://github.com/flottokarotto/usagi"
   },
   "license": "MIT",
   "engines": {

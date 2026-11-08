@@ -28,18 +28,18 @@ export class Start extends React.Component<IStartProps, {}> {
     return (
       <section
         id="start"
-        aria-label="Welcome to GitHub Desktop"
+        aria-label="Welcome to Usagi"
         aria-describedby="start-description"
       >
         <div className="start-content">
           <h1 className="welcome-title">
-            Welcome to <span>GitHub Desktop</span>
+            Welcome to <span>Usagi</span>
           </h1>
           {!this.props.loadingBrowserAuth ? (
             <>
               <p id="start-description" className="welcome-text">
-                GitHub Desktop is a seamless way to contribute to projects on
-                GitHub and GitHub Enterprise. Sign in below to get started with
+                Usagi is a seamless way to contribute to projects on
+                GitLab, GitHub, and universal Git repositories. Sign in below to get started with
                 your existing projects.
               </p>
             </>
@@ -48,6 +48,12 @@ export class Start extends React.Component<IStartProps, {}> {
           )}
 
           <div className="welcome-main-buttons">
+            <Button
+              className="button-with-icon"
+              onClick={this.signInToGitLab}
+            >
+              Sign in to GitLab
+            </Button>
             <Button
               type="submit"
               className="button-with-icon"
@@ -118,6 +124,10 @@ export class Start extends React.Component<IStartProps, {}> {
 
   private cancelBrowserAuth = () => {
     this.props.advance(WelcomeStep.Start)
+  }
+
+  private signInToGitLab = () => {
+    this.props.dispatcher.showGitLabSignInDialog()
   }
 
   private signInToEnterprise = () => {
