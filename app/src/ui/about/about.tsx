@@ -240,8 +240,8 @@ export class About extends React.Component<IAboutProps> {
         <p className="no-padding">Looking for the latest features?</p>
         <p className="no-padding">
           Check out the{' '}
-          <LinkButton uri="https://desktop.github.com/beta">
-            Beta Channel
+          <LinkButton uri="https://github.com/flottokarotto/usagi/releases">
+            Releases & Beta Channel
           </LinkButton>
         </p>
       </div>
@@ -268,12 +268,7 @@ export class About extends React.Component<IAboutProps> {
         {this.renderUpdateErrors()}
         <DialogContent>
           <Row className="logo">
-            <img
-              src={DesktopLogo}
-              alt="Usagi Desktop"
-              width="64"
-              height="64"
-            />
+            <img src={DesktopLogo} alt="Usagi Desktop" width="64" height="64" />
           </Row>
           <h1 id={titleId}>About {name}</h1>
           <p className="no-padding">
@@ -298,7 +293,7 @@ export class About extends React.Component<IAboutProps> {
             </p>
             <p className="terms-and-license">
               <LinkButton uri="https://gh.io/copilot-for-desktop-transparency">
-                Responsible use of Copilot in GitHub Desktop
+                Responsible use of Copilot in Usagi
               </LinkButton>
             </p>
           </div>

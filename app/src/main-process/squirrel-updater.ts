@@ -96,19 +96,21 @@ function resolveVersionedPath(binPath: string, relativePath: string): string {
  * rewrite the trampoline to point to the new, version-specific path. Bingo
  * bango Bob's your uncle.
  */
-function writeBatchScriptCLITrampoline(binPath: string): Promise<void> {
+async function writeBatchScriptCLITrampoline(binPath: string): Promise<void> {
   const versionedPath = resolveVersionedPath(
     binPath,
     'resources/app/static/github.bat'
   )
 
   const trampoline = `@echo off\n"%~dp0\\${versionedPath}" %*`
-  const trampolinePath = Path.join(binPath, 'github.bat')
+  const usagiTrampolinePath = Path.join(binPath, 'usagi.bat')
+  const githubTrampolinePath = Path.join(binPath, 'github.bat')
 
-  return writeFile(trampolinePath, trampoline)
+  await writeFile(usagiTrampolinePath, trampoline)
+  await writeFile(githubTrampolinePath, trampoline)
 }
 
-function writeShellScriptCLITrampoline(binPath: string): Promise<void> {
+async function writeShellScriptCLITrampoline(binPath: string): Promise<void> {
   // The path we get from `resolveVersionedPath` is a Win32 relative
   // path (something like `..\app-2.5.0\resources\app\static\github.sh`).
   // We need to make sure it's a POSIX path in order for WSL to be able
@@ -121,9 +123,17 @@ function writeShellScriptCLITrampoline(binPath: string): Promise<void> {
   const trampoline = `#!/usr/bin/env bash
   DIR="$( cd "$( dirname "\$\{BASH_SOURCE[0]\}" )" && pwd )"
   sh "$DIR/${versionedPath}" "$@"`
-  const trampolinePath = Path.join(binPath, 'github')
+  const usagiTrampolinePath = Path.join(binPath, 'usagi')
+  const githubTrampolinePath = Path.join(binPath, 'github')
 
-  return writeFile(trampolinePath, trampoline, { encoding: 'utf8', mode: 755 })
+  await writeFile(usagiTrampolinePath, trampoline, {
+    encoding: 'utf8',
+    mode: 755,
+  })
+  await writeFile(githubTrampolinePath, trampoline, {
+    encoding: 'utf8',
+    mode: 755,
+  })
 }
 
 /** Spawn the Squirrel.Windows `Update.exe` with a command. */
@@ -156,11 +166,7 @@ function removeShortcut(): Promise<void> {
 async function updateShortcut(): Promise<void> {
   const homeDirectory = Os.homedir()
   if (homeDirectory) {
-    const desktopShortcutPath = Path.join(
-      homeDirectory,
-      'Desktop',
-      'Usagi.lnk'
-    )
+    const desktopShortcutPath = Path.join(homeDirectory, 'Desktop', 'Usagi.lnk')
     const exists = await pathExists(desktopShortcutPath)
     const locations: ShortcutLocations = exists
       ? ['StartMenu', 'Desktop']

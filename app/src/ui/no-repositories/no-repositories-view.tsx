@@ -97,7 +97,7 @@ export class NoRepositoriesView extends React.Component<
         <section aria-label="Let's get started!">
           <header>
             <h1>Let's get started!</h1>
-            <p>Add a repository to GitHub Desktop to start collaborating</p>
+            <p>Add a repository to Usagi to start collaborating</p>
           </header>
 
           <div className="content">
@@ -146,9 +146,24 @@ export class NoRepositoriesView extends React.Component<
     }
   }
 
+  private getAccountRepositories(
+    account: Account
+  ): IAccountRepositories | undefined {
+    const direct = this.props.apiRepositories.get(account)
+    if (direct !== undefined) {
+      return direct
+    }
+    for (const [key, value] of this.props.apiRepositories.entries()) {
+      if (accountEquals(key, account)) {
+        return value
+      }
+    }
+    return undefined
+  }
+
   private ensureRepositoriesForAccount(account: Account | undefined) {
     if (account) {
-      const accountState = this.props.apiRepositories.get(account)
+      const accountState = this.getAccountRepositories(account)
 
       if (accountState === undefined) {
         this.props.onRefreshRepositories(account)
@@ -168,7 +183,7 @@ export class NoRepositoriesView extends React.Component<
       return null
     }
 
-    const accountState = this.props.apiRepositories.get(account)
+    const accountState = this.getAccountRepositories(account)
 
     return (
       <div className="content-pane repository-list">

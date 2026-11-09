@@ -36,7 +36,12 @@ import {
 import { Branch } from '../models/branch'
 import { PreferencesTab } from '../models/preferences'
 import { findItemByAccessKey, itemIsSelectable } from '../models/app-menu'
-import { Account, isDotComAccount } from '../models/account'
+import {
+  Account,
+  isDotComAccount,
+  isEnterpriseAccount,
+  isGitLabAccount,
+} from '../models/account'
 import { TipState } from '../models/tip'
 import { CloneRepositoryTab } from '../models/clone-repository-tab'
 import { CloningRepository } from '../models/cloning-repository'
@@ -856,6 +861,16 @@ export class App extends React.Component<IAppProps, IAppState> {
         CloneRepositoryTab.Generic
       )
       initialURL = cloneUrl
+    } else {
+      const hasGitHub = this.state.accounts.some(
+        a => isDotComAccount(a) || isEnterpriseAccount(a)
+      )
+      const hasGitLab = this.state.accounts.some(isGitLabAccount)
+      if (!hasGitHub && hasGitLab) {
+        this.props.dispatcher.changeCloneRepositoriesTab(
+          CloneRepositoryTab.GitLab
+        )
+      }
     }
 
     return this.props.dispatcher.showPopup({
@@ -2958,12 +2973,12 @@ export class App extends React.Component<IAppProps, IAppState> {
             onAccepted={popup.onAccepted}
             onDismissed={onPopupDismissedFn}
           >
-            Copilot will plan your selected changes, and Usagi will
-            create one or more local commits with their generated messages.
-            Copilot will not edit your files. You can cancel before local
-            acceptance to undo commits created by this run. If Push after
-            committing is enabled, all local commits are kept once pushing
-            starts, even if the push fails.
+            Copilot will plan your selected changes, and Usagi will create one
+            or more local commits with their generated messages. Copilot will
+            not edit your files. You can cancel before local acceptance to undo
+            commits created by this run. If Push after committing is enabled,
+            all local commits are kept once pushing starts, even if the push
+            fails.
           </CopilotDisclaimer>
         )
       }

@@ -7,6 +7,7 @@ import {
   IAccountIdentity,
   isDotComAccount,
   isEnterpriseAccount,
+  isGitLabAccount,
   isSameAccount,
 } from '../../models/account'
 import { FoldoutType } from '../../lib/app-state'
@@ -299,6 +300,18 @@ export class CloneRepository extends React.Component<
     const initialURL = this.props.initialURL
     if (initialURL) {
       this.updateUrl(initialURL)
+    } else {
+      const hasGitHub = this.props.accounts.some(
+        a => isDotComAccount(a) || isEnterpriseAccount(a)
+      )
+      const hasGitLab = this.props.accounts.some(isGitLabAccount)
+      if (
+        !hasGitHub &&
+        hasGitLab &&
+        this.props.selectedTab === CloneRepositoryTab.GitHub
+      ) {
+        this.props.onTabSelected(CloneRepositoryTab.GitLab)
+      }
     }
 
     this.checkIsTopMostDialog(this.props.isTopMost)
@@ -401,6 +414,13 @@ export class CloneRepository extends React.Component<
       return null
     }
 
+    if (
+      selectedTab === CloneRepositoryTab.GitLab &&
+      this.getSelectedGitLabAccount() === null
+    ) {
+      return null
+    }
+
     const disabled = this.checkIfCloningDisabled()
 
     return (
@@ -449,14 +469,32 @@ export class CloneRepository extends React.Component<
 
       case CloneRepositoryTab.GitLab: {
         const tabState = this.state.gitLabTabState
+        const selectedAccount = this.getSelectedGitLabAccount()
+
+        const accountState = selectedAccount
+          ? this.props.apiRepositories.get(selectedAccount)
+          : undefined
+        const repositories =
+          accountState === undefined ? null : accountState.repositories
+        const loading =
+          accountState === undefined ? false : accountState.loading
+
         return (
           <CloneGitLabRepository
             path={tabState.path ?? ''}
+            account={selectedAccount}
             accounts={this.props.accounts}
             selectedItem={tabState.selectedItem}
             onSelectionChanged={this.onGitLabSelectionChanged}
             onPathChanged={this.onPathChanged}
             onChooseDirectory={this.onChooseDirectory}
+            repositories={repositories}
+            loading={loading}
+            onRefreshRepositories={this.props.onRefreshRepositories}
+            filterText={tabState.filterText}
+            onFilterTextChanged={this.onGitLabFilterTextChanged}
+            onItemClicked={this.onItemClicked}
+            onSelectedAccountChanged={this.onSelectedAccountChanged}
             dispatcher={this.props.dispatcher}
           />
         )
@@ -557,6 +595,28 @@ export class CloneRepository extends React.Component<
       accounts.at(0) ??
       null
     )
+  }
+
+  /**
+   * The account to browse and clone with in the GitLab tab.
+   */
+  private getSelectedGitLabAccount(): Account | null {
+    const accounts = this.props.accounts.filter(isGitLabAccount)
+    const { selectedAccount } = this.props
+    return (
+      accounts.find(a => isSameAccount(a, selectedAccount)) ??
+      accounts.at(0) ??
+      null
+    )
+  }
+
+  private onGitLabFilterTextChanged = (filterText: string) => {
+    this.setState(prevState => ({
+      gitLabTabState: {
+        ...prevState.gitLabTabState,
+        filterText,
+      },
+    }))
   }
 
   private getTabState(tab: CloneRepositoryTab): IBaseTabState {
@@ -875,6 +935,13 @@ export class CloneRepository extends React.Component<
       return resolveURLCloneInfo(url, this.props.accounts)
     }
 
+    if (tab === CloneRepositoryTab.GitLab) {
+      return {
+        url,
+        defaultBranch: this.state.gitLabTabState.selectedItem?.default_branch,
+      }
+    }
+
     if (lastParsedIdentifier !== null && account !== null) {
       const api = API.fromAccount(account)
       const { owner, name } = lastParsedIdentifier
@@ -959,7 +1026,11 @@ export class CloneRepository extends React.Component<
       lastParsedIdentifier,
       path,
       account:
-        tab === CloneRepositoryTab.GitHub ? this.getSelectedAccount() : null,
+        tab === CloneRepositoryTab.GitHub
+          ? this.getSelectedAccount()
+          : tab === CloneRepositoryTab.GitLab
+          ? this.getSelectedGitLabAccount()
+          : null,
     }
   }
 

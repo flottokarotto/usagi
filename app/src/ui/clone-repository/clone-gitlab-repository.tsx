@@ -1,24 +1,35 @@
 import * as React from 'react'
 import { Account, isGitLabAccount } from '../../models/account'
-import { DialogContent } from '../dialog'
+import { DialogContent, DialogError } from '../dialog'
 import { TextBox } from '../lib/text-box'
 import { Select } from '../lib/select'
 import { Row } from '../lib/row'
 import { Button } from '../lib/button'
 import { CallToAction } from '../lib/call-to-action'
 import { Dispatcher } from '../dispatcher'
-import { GitLabAPI, IGitLabProject } from '../../lib/gitlab-api'
+import { GitLabAPI, gitLabProjectToAPIRepository } from '../../lib/gitlab-api'
 import { IAPIRepository } from '../../lib/api'
 import { CloneableRepositoryFilterList } from './cloneable-repository-filter-list'
 import { ClickSource } from '../lib/list'
 
 interface ICloneGitLabRepositoryProps {
+  readonly account?: Account | null
   readonly accounts: ReadonlyArray<Account>
   readonly path: string
   readonly onPathChanged: (path: string) => void
   readonly onChooseDirectory: () => Promise<string | undefined>
   readonly selectedItem: IAPIRepository | null
   readonly onSelectionChanged: (selectedItem: IAPIRepository | null) => void
+  readonly repositories?: ReadonlyArray<IAPIRepository> | null
+  readonly loading?: boolean
+  readonly filterText?: string
+  readonly onFilterTextChanged?: (filterText: string) => void
+  readonly onRefreshRepositories?: (account: Account) => void
+  readonly onItemClicked?: (
+    repository: IAPIRepository,
+    source: ClickSource
+  ) => void
+  readonly onSelectedAccountChanged?: (account: Account) => void
   readonly dispatcher: Dispatcher
 }
 
@@ -30,34 +41,6 @@ interface ICloneGitLabRepositoryState {
   readonly error: string | null
 }
 
-function gitLabProjectToAPIRepository(
-  project: IGitLabProject,
-  endpoint: string
-): IAPIRepository {
-  const parts = project.path_with_namespace.split('/')
-  const ownerLogin = parts.length > 1 ? parts.slice(0, -1).join('/') : 'gitlab'
-
-  return {
-    clone_url: project.http_url_to_repo,
-    ssh_url: project.ssh_url_to_repo,
-    html_url: project.web_url,
-    name: project.name_with_namespace,
-    owner: {
-      id: project.id,
-      login: ownerLogin,
-      avatar_url: '',
-      type: 'User',
-      html_url: project.web_url,
-    },
-    private: project.visibility === 'private',
-    fork: project.forked_from_project !== undefined,
-    default_branch: project.default_branch || 'main',
-    pushed_at: '',
-    has_issues: true,
-    archived: project.archived,
-  }
-}
-
 export class CloneGitLabRepository extends React.Component<
   ICloneGitLabRepositoryProps,
   ICloneGitLabRepositoryState
@@ -66,7 +49,8 @@ export class CloneGitLabRepository extends React.Component<
     super(props)
 
     const gitLabAccounts = props.accounts.filter(isGitLabAccount)
-    const selectedAccount = gitLabAccounts.length > 0 ? gitLabAccounts[0] : null
+    const selectedAccount =
+      props.account ?? (gitLabAccounts.length > 0 ? gitLabAccounts[0] : null)
 
     this.state = {
       selectedAccount,
@@ -78,19 +62,24 @@ export class CloneGitLabRepository extends React.Component<
   }
 
   public componentDidMount() {
-    if (this.state.selectedAccount) {
+    if (this.props.repositories === undefined && this.state.selectedAccount) {
       this.loadRepositories(this.state.selectedAccount)
     }
   }
 
   public componentDidUpdate(prevProps: ICloneGitLabRepositoryProps) {
-    if (prevProps.accounts !== this.props.accounts) {
+    if (prevProps.account !== this.props.account && this.props.account) {
+      this.setState({ selectedAccount: this.props.account })
+      if (this.props.repositories === undefined) {
+        this.loadRepositories(this.props.account)
+      }
+    } else if (prevProps.accounts !== this.props.accounts) {
       const gitLabAccounts = this.props.accounts.filter(isGitLabAccount)
       const current = this.state.selectedAccount
       if (!current || !gitLabAccounts.some(a => a.id === current.id)) {
         const next = gitLabAccounts[0] || null
         this.setState({ selectedAccount: next })
-        if (next) {
+        if (next && this.props.repositories === undefined) {
           this.loadRepositories(next)
         }
       }
@@ -119,7 +108,11 @@ export class CloneGitLabRepository extends React.Component<
   }
 
   private onFilterTextChanged = (filterText: string) => {
-    this.setState({ filterText })
+    if (this.props.onFilterTextChanged) {
+      this.props.onFilterTextChanged(filterText)
+    } else {
+      this.setState({ filterText })
+    }
   }
 
   private onSignIn = () => {
@@ -127,16 +120,24 @@ export class CloneGitLabRepository extends React.Component<
   }
 
   private onRefresh = () => {
-    if (this.state.selectedAccount) {
-      this.loadRepositories(this.state.selectedAccount)
+    const account = this.state.selectedAccount
+    if (!account) {
+      return
+    }
+
+    if (this.props.onRefreshRepositories) {
+      this.props.onRefreshRepositories(account)
+    } else {
+      this.loadRepositories(account)
     }
   }
 
-  private onItemClicked = (
-    repository: IAPIRepository,
-    source: ClickSource
-  ) => {
-    this.props.onSelectionChanged(repository)
+  private onItemClicked = (repository: IAPIRepository, source: ClickSource) => {
+    if (this.props.onItemClicked) {
+      this.props.onItemClicked(repository, source)
+    } else {
+      this.props.onSelectionChanged(repository)
+    }
   }
 
   private onAccountChanged = (event: React.FormEvent<HTMLSelectElement>) => {
@@ -146,7 +147,10 @@ export class CloneGitLabRepository extends React.Component<
       gitLabAccounts.find(a => `${a.endpoint}:${a.login}` === key) ?? null
     this.setState({ selectedAccount: nextAccount })
     if (nextAccount) {
-      this.loadRepositories(nextAccount)
+      this.props.onSelectedAccountChanged?.(nextAccount)
+      if (this.props.repositories === undefined) {
+        this.loadRepositories(nextAccount)
+      }
     }
   }
 
@@ -156,20 +160,30 @@ export class CloneGitLabRepository extends React.Component<
     if (gitLabAccounts.length === 0) {
       return (
         <DialogContent className="clone-github-repo-content">
-          <CallToAction
-            actionTitle="Sign into GitLab"
-            onAction={this.onSignIn}
-          >
+          <CallToAction actionTitle="Sign into GitLab" onAction={this.onSignIn}>
             <div>
-              Sign in to GitLab.com or your self-hosted GitLab instance to access your projects.
+              Sign in to GitLab.com or your self-hosted GitLab instance to
+              access your projects.
             </div>
           </CallToAction>
         </DialogContent>
       )
     }
 
+    const repositories =
+      this.props.repositories !== undefined
+        ? this.props.repositories
+        : this.state.repositories
+    const loading =
+      this.props.loading !== undefined ? this.props.loading : this.state.loading
+    const filterText =
+      this.props.filterText !== undefined
+        ? this.props.filterText
+        : this.state.filterText
+
     return (
       <DialogContent className="clone-github-repo-content">
+        {this.state.error && <DialogError>{this.state.error}</DialogError>}
         {gitLabAccounts.length > 1 && (
           <Row>
             <Select
@@ -182,7 +196,8 @@ export class CloneGitLabRepository extends React.Component<
                   key={`${account.endpoint}:${account.login}`}
                   value={`${account.endpoint}:${account.login}`}
                 >
-                  {account.friendlyEndpoint} — @{account.login} ({account.friendlyName})
+                  {account.friendlyEndpoint} — @{account.login} (
+                  {account.friendlyName})
                 </option>
               ))}
             </Select>
@@ -193,9 +208,9 @@ export class CloneGitLabRepository extends React.Component<
             account={this.state.selectedAccount!}
             selectedItem={this.props.selectedItem}
             onSelectionChanged={this.props.onSelectionChanged}
-            repositories={this.state.repositories}
-            loading={this.state.loading}
-            filterText={this.state.filterText}
+            repositories={repositories}
+            loading={loading}
+            filterText={filterText}
             onFilterTextChanged={this.onFilterTextChanged}
             onRefreshRepositories={this.onRefresh}
             onItemClicked={this.onItemClicked}

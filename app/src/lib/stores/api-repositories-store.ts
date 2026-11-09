@@ -1,7 +1,8 @@
 import { BaseStore } from './base-store'
 import { AccountsStore } from './accounts-store'
 import { IAPIRepository, API } from '../api'
-import { Account, accountEquals } from '../../models/account'
+import { Account, accountEquals, isGitLabAccount } from '../../models/account'
+import { GitLabAPI, gitLabProjectToAPIRepository } from '../gitlab-api'
 import { merge } from '../merge'
 
 /**
@@ -193,6 +194,33 @@ export class ApiRepositoriesStore extends BaseStore {
         missing.delete(r.clone_url)
       })
       this.updateAccount(account, { repositories: [...repositories.values()] })
+    }
+
+    if (isGitLabAccount(account)) {
+      try {
+        const api = new GitLabAPI(account.endpoint, account.token)
+        await api.streamUserProjects(projects => {
+          const page = projects.map(p =>
+            gitLabProjectToAPIRepository(p, account.endpoint)
+          )
+          addPage(page)
+        })
+      } catch (e) {
+        log.warn(
+          `ApiRepositoriesStore: Failed to load repositories from GitLab for ${account.login}`,
+          e
+        )
+      }
+
+      if (missing.size) {
+        missing.forEach((_, clone_url) => repositories.delete(clone_url))
+        this.updateAccount(account, {
+          repositories: [...repositories.values()],
+        })
+      }
+
+      this.updateAccount(account, { loading: false })
+      return
     }
 
     const api = API.fromAccount(resolveAccount(account, this.accountState))

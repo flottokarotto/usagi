@@ -1,7 +1,8 @@
 import * as URL from 'url'
 import { getHTMLURL, API } from './api'
 import { parseRemote, parseRepositoryIdentifier } from './remote-parsing'
-import { Account, isDotComAccount } from '../models/account'
+import { Account, isDotComAccount, isGitLabAccount } from '../models/account'
+import { GitLabAPI } from './gitlab-api'
 
 type RepositoryLookupFunc = (
   account: Account,
@@ -18,6 +19,16 @@ async function canAccessRepositoryUsingAPI(
   owner: string,
   name: string
 ): Promise<boolean> {
+  if (isGitLabAccount(account)) {
+    try {
+      const api = new GitLabAPI(account.endpoint, account.token)
+      const project = await api.getProject(`${owner}/${name}`)
+      return project !== null
+    } catch {
+      return false
+    }
+  }
+
   const api = API.fromAccount(account)
   const repository = await api.fetchRepository(owner, name)
   if (repository) {

@@ -16,6 +16,29 @@ export function findToastActivatorClsid() {
       'Windows',
       'Start Menu',
       'Programs',
+      'Usagi Contributors',
+      'Usagi.lnk'
+    ),
+    path.join(
+      os.homedir(),
+      'AppData',
+      'Roaming',
+      'Microsoft',
+      'Windows',
+      'Start Menu',
+      'Programs',
+      'Usagi',
+      'Usagi.lnk'
+    ),
+    path.join(os.homedir(), 'Desktop', 'Usagi.lnk'),
+    path.join(
+      os.homedir(),
+      'AppData',
+      'Roaming',
+      'Microsoft',
+      'Windows',
+      'Start Menu',
+      'Programs',
       'GitHub, Inc',
       'GitHub Desktop.lnk'
     ),

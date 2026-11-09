@@ -6,7 +6,11 @@ import { TextBox } from '../lib/text-box'
 import { Row } from '../lib/row'
 import { LinkButton } from '../lib/link-button'
 import { Account } from '../../models/account'
-import { GitLabAPI, getGitLabAPIEndpoint, DefaultGitLabHTMLURL } from '../../lib/gitlab-api'
+import {
+  GitLabAPI,
+  getGitLabAPIEndpoint,
+  DefaultGitLabHTMLURL,
+} from '../../lib/gitlab-api'
 
 interface IGitLabSignInProps {
   readonly dispatcher: Dispatcher
@@ -71,6 +75,7 @@ export class GitLabSignIn extends React.Component<
     try {
       const api = new GitLabAPI(trimmedEndpoint, trimmedToken)
       const user = await api.getUser()
+      await api.getProjects(1, 1)
 
       const apiEndpoint = getGitLabAPIEndpoint(trimmedEndpoint)
       const emails = user.email
@@ -102,7 +107,9 @@ export class GitLabSignIn extends React.Component<
         error:
           e instanceof Error
             ? e
-            : new Error('Failed to authenticate with GitLab. Please check your token.'),
+            : new Error(
+                'Failed to authenticate with GitLab. Please check your token.'
+              ),
       })
     }
   }
@@ -144,8 +151,7 @@ export class GitLabSignIn extends React.Component<
           </Row>
 
           <p className="secondary-text">
-            Required scopes:{' '}
-            <code>read_api</code>, <code>read_user</code>,{' '}
+            Required scopes: <code>read_api</code>, <code>read_user</code>,{' '}
             <code>read_repository</code>, <code>write_repository</code>.
           </p>
 
@@ -159,7 +165,9 @@ export class GitLabSignIn extends React.Component<
         <DialogFooter>
           <OkCancelButtonGroup
             okButtonText="Sign In"
-            okButtonDisabled={this.state.loading || this.state.token.trim().length === 0}
+            okButtonDisabled={
+              this.state.loading || this.state.token.trim().length === 0
+            }
             cancelButtonDisabled={this.state.loading}
           />
         </DialogFooter>

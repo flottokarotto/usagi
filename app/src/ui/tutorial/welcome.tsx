@@ -17,10 +17,10 @@ export class TutorialWelcome extends React.Component {
     return (
       <div id="tutorial-welcome">
         <div className="header">
-          <h1>Welcome to GitHub Desktop</h1>
+          <h1>Welcome to Usagi</h1>
           <p>
-            Use this tutorial to get comfortable with Git, GitHub, and GitHub
-            Desktop.
+            Use this tutorial to get comfortable with Git, GitLab, GitHub, and
+            Usagi.
           </p>
         </div>
         <ul className="definitions">
@@ -36,15 +36,14 @@ export class TutorialWelcome extends React.Component {
               alt="People with discussion bubbles overhead"
             />
             <p>
-              <strong>GitHub</strong> is where you store your code and
+              <strong>GitLab & GitHub</strong> are where you store your code and
               collaborate with others.
             </p>
           </li>
           <li>
             <img src={CloudServerImage} alt="Server stack with cloud" />
             <p>
-              <strong>GitHub Desktop</strong> helps you work with GitHub
-              locally.
+              <strong>Usagi</strong> helps you work with repositories locally.
             </p>
           </li>
         </ul>

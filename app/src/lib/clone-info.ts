@@ -6,7 +6,8 @@ import {
   parseRepositoryIdentifier,
 } from './remote-parsing'
 import { findAccountForRemoteURL } from './find-account'
-import { Account } from '../models/account'
+import { Account, isGitLabAccount } from '../models/account'
+import { GitLabAPI } from './gitlab-api'
 
 /**
  * Look up the clone URL and default branch of a repository using the given
@@ -19,12 +20,40 @@ export type CloneInfoLookup = (
   protocol: GitProtocol | undefined
 ) => Promise<IAPIRepositoryCloneInfo | null>
 
-const lookupCloneInfoUsingAPI: CloneInfoLookup = (
+const lookupCloneInfoUsingAPI: CloneInfoLookup = async (
   account,
   owner,
   name,
   protocol
-) => API.fromAccount(account).fetchRepositoryCloneInfo(owner, name, protocol)
+) => {
+  if (isGitLabAccount(account)) {
+    try {
+      const api = new GitLabAPI(account.endpoint, account.token)
+      const project = await api.getProject(`${owner}/${name}`)
+      if (project) {
+        return {
+          url:
+            protocol === 'ssh'
+              ? project.ssh_url_to_repo
+              : project.http_url_to_repo,
+          defaultBranch: project.default_branch,
+        }
+      }
+    } catch (err) {
+      log.warn(
+        `lookupCloneInfoUsingAPI: GitLab lookup failed for '${owner}/${name}'`,
+        err
+      )
+    }
+    return null
+  }
+
+  return API.fromAccount(account).fetchRepositoryCloneInfo(
+    owner,
+    name,
+    protocol
+  )
+}
 
 /**
  * Resolve the URL and default branch to clone a URL or `owner/name` shortcut

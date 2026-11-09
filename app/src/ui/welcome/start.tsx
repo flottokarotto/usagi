@@ -38,9 +38,9 @@ export class Start extends React.Component<IStartProps, {}> {
           {!this.props.loadingBrowserAuth ? (
             <>
               <p id="start-description" className="welcome-text">
-                Usagi is a seamless way to contribute to projects on
-                GitLab, GitHub, and universal Git repositories. Sign in below to get started with
-                your existing projects.
+                Usagi is a seamless way to contribute to projects on GitLab,
+                GitHub, and universal Git repositories. Sign in below to get
+                started with your existing projects.
               </p>
             </>
           ) : (
@@ -48,10 +48,7 @@ export class Start extends React.Component<IStartProps, {}> {
           )}
 
           <div className="welcome-main-buttons">
-            <Button
-              className="button-with-icon"
-              onClick={this.signInToGitLab}
-            >
+            <Button className="button-with-icon" onClick={this.signInToGitLab}>
               Sign in to GitLab (GitLab.com & Self-Hosted)
             </Button>
             <Button
@@ -102,8 +99,8 @@ export class Start extends React.Component<IStartProps, {}> {
             </LinkButton>
           </p>
           <p>
-            GitHub Desktop sends usage metrics to improve the product and inform
-            feature decisions.{' '}
+            Usagi sends usage metrics to improve the product and inform feature
+            decisions.{' '}
             <LinkButton uri={SamplesURL}>
               Learn more about user metrics.
             </LinkButton>

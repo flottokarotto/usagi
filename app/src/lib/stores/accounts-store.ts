@@ -5,7 +5,9 @@ import {
   getAccountKey,
   IAccountIdentity,
   isDotComAccount,
+  isGitLabAccount,
 } from '../../models/account'
+import { GitLabAPI } from '../gitlab-api'
 import { fetchUser, EmailVisibility, getEnterpriseAPIURL } from '../api'
 import { fatalError } from '../fatal-error'
 import { TypedBaseStore } from './base-store'
@@ -328,7 +330,7 @@ export class AccountsStore extends TypedBaseStore<ReadonlyArray<Account>> {
       if (__DARWIN__ && isKeyChainError(e)) {
         this.emitError(
           new Error(
-            `GitHub Desktop was unable to store the account token in the keychain. Please check you have unlocked access to the 'login' keychain.`
+            `Usagi was unable to store the account token in the keychain. Please check you have unlocked access to the 'login' keychain.`
           )
         )
       } else {
@@ -516,6 +518,31 @@ async function updatedAccount(account: Account): Promise<Account> {
   if (!account.token) {
     return fatalError(
       `Cannot update an account which doesn't have a token: ${account.login}`
+    )
+  }
+
+  if (isGitLabAccount(account)) {
+    const api = new GitLabAPI(account.endpoint, account.token)
+    const user = await api.getUser()
+    const emails = user.email
+      ? [
+          {
+            email: user.email,
+            verified: true,
+            primary: true,
+            visibility: 'public' as const,
+          },
+        ]
+      : account.emails
+
+    return new Account(
+      user.username,
+      account.endpoint,
+      account.token,
+      emails,
+      user.avatar_url,
+      user.id,
+      user.name || user.username
     )
   }
 

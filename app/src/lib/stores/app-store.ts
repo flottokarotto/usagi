@@ -8966,7 +8966,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
         if (match === null) {
           this.emitError(
             new ExternalEditorError(
-              `No suitable editors installed for GitHub Desktop to launch. Install ${suggestedExternalEditor.name} for your platform and restart GitHub Desktop to try again.`,
+              `No suitable editors installed for Usagi to launch. Install ${suggestedExternalEditor.name} for your platform and restart Usagi to try again.`,
               { suggestDefaultEditor: true }
             )
           )
@@ -9043,7 +9043,7 @@ export class AppStore extends TypedBaseStore<IAppState> {
       if (match === null) {
         this.emitError(
           new ExternalEditorError(
-            `No suitable editors installed for GitHub Desktop to launch. Install ${suggestedExternalEditor.name} for your platform and restart GitHub Desktop to try again.`,
+            `No suitable editors installed for Usagi to launch. Install ${suggestedExternalEditor.name} for your platform and restart Usagi to try again.`,
             { suggestDefaultEditor: true }
           )
         )
@@ -9460,7 +9460,9 @@ export class AppStore extends TypedBaseStore<IAppState> {
   }
 
   public async _addAccount(account: Account): Promise<Account | null> {
-    log.info(`[AppStore] adding account ${account.login} (${account.name}) to store`)
+    log.info(
+      `[AppStore] adding account ${account.login} (${account.name}) to store`
+    )
     return this.accountsStore.addAccount(account)
   }
 
@@ -10227,7 +10229,10 @@ export class AppStore extends TypedBaseStore<IAppState> {
     if (!gitHubRepository) {
       const remotes = await getRemotes(repository)
       const primaryRemote = remotes.find(r => r.name === 'origin') ?? remotes[0]
-      if (primaryRemote && isGitLabRemoteURL(primaryRemote.url, this.accounts)) {
+      if (
+        primaryRemote &&
+        isGitLabRemoteURL(primaryRemote.url, this.accounts)
+      ) {
         gitLabRemoteUrl = primaryRemote.url
       }
     }
@@ -10265,7 +10270,8 @@ export class AppStore extends TypedBaseStore<IAppState> {
         if (webUrl) {
           const mrUrl = getGitLabCreateMergeRequestURL(
             webUrl,
-            compareBranch.upstreamWithoutRemote ?? compareBranch.nameWithoutRemote,
+            compareBranch.upstreamWithoutRemote ??
+              compareBranch.nameWithoutRemote,
             baseBranch?.nameWithoutRemote
           )
           await this._openInBrowser(mrUrl)

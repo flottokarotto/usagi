@@ -1,6 +1,6 @@
 import { Account, isGitLabAccount } from '../models/account'
 import { parseRemote } from './remote-parsing'
-import { getHTMLURL } from './api'
+import { getHTMLURL, IAPIRepository } from './api'
 
 export const DefaultGitLabEndpoint = 'https://gitlab.com/api/v4'
 export const DefaultGitLabHTMLURL = 'https://gitlab.com'
@@ -171,9 +171,13 @@ export function getGitLabCreateMergeRequestURL(
   targetBranch?: string
 ): string {
   const base = webUrl.replace(/\/+$/, '')
-  let url = `${base}/-/merge_requests/new?merge_request%5Bsource_branch%5D=${encodeURIComponent(sourceBranch)}`
+  let url = `${base}/-/merge_requests/new?merge_request%5Bsource_branch%5D=${encodeURIComponent(
+    sourceBranch
+  )}`
   if (targetBranch) {
-    url += `&merge_request%5Btarget_branch%5D=${encodeURIComponent(targetBranch)}`
+    url += `&merge_request%5Btarget_branch%5D=${encodeURIComponent(
+      targetBranch
+    )}`
   }
   return url
 }
@@ -225,6 +229,9 @@ export class GitLabAPI {
       } catch {
         detail = response.statusText
       }
+      if (response.status === 403 && !detail.toLowerCase().includes('scope')) {
+        detail += ' (check that your token has read_api or api scope)'
+      }
       throw new Error(`GitLab API error (${response.status}): ${detail}`)
     }
 
@@ -248,6 +255,30 @@ export class GitLabAPI {
       page,
       order_by: 'last_activity_at',
     })
+  }
+
+  /**
+   * Fetch accessible projects in a streaming fashion, calling the callback
+   * with each page.
+   */
+  public async streamUserProjects(
+    callback: (projects: ReadonlyArray<IGitLabProject>) => void,
+    maxPages = 10
+  ): Promise<void> {
+    let page = 1
+    const perPage = 100
+
+    while (page <= maxPages) {
+      const projects = await this.getProjects(page, perPage)
+      if (projects.length === 0) {
+        break
+      }
+      callback(projects)
+      if (projects.length < perPage) {
+        break
+      }
+      page++
+    }
   }
 
   /** Fetch a specific project by id or url-encoded path (e.g. 'group/project') */
@@ -283,5 +314,36 @@ export class GitLabAPI {
     return this.request<ReadonlyArray<IGitLabCommitStatus>>(
       `projects/${encoded}/repository/commits/${sha}/statuses`
     )
+  }
+}
+
+/**
+ * Convert a GitLab project to an IAPIRepository suitable for Desktop's repository lists and clone flows.
+ */
+export function gitLabProjectToAPIRepository(
+  project: IGitLabProject,
+  endpoint: string
+): IAPIRepository {
+  const parts = project.path_with_namespace.split('/')
+  const ownerLogin = parts.length > 1 ? parts.slice(0, -1).join('/') : 'gitlab'
+
+  return {
+    clone_url: project.http_url_to_repo,
+    ssh_url: project.ssh_url_to_repo,
+    html_url: project.web_url,
+    name: project.path,
+    owner: {
+      id: project.id,
+      login: ownerLogin,
+      avatar_url: '',
+      type: 'User',
+      html_url: project.web_url,
+    },
+    private: project.visibility === 'private',
+    fork: project.forked_from_project !== undefined,
+    default_branch: project.default_branch || 'main',
+    pushed_at: '',
+    has_issues: true,
+    archived: project.archived,
   }
 }
